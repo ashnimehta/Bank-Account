@@ -1,4 +1,4 @@
-#include "BankAccount.h"
+#include "bankAccount.h"
 #define MAX_ACCOUNTS 20
 
 BankAccount* bankArray;
