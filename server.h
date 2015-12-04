@@ -2,6 +2,8 @@
 #define SERVER_H
 
 #include "utils.h"
+/*use a semamphore because oracle lists it as one of the synchronization
+mechanisms*/
 
 typedef struct BAccount{
 	char name[100];
