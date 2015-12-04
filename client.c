@@ -9,16 +9,96 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define PORT "36963"
+#define PORT "36963" /*It's a palindrome and all odd numbers so I thought it was cute*/
 
+// A couple of functions for converting IP addresses to and from dotted decimal notation.
+/*taken from BKR*/
+/*Don't know if these are helpful yet but I included them below*/
+
+char *
+get_istring( unsigned long x, char * s, unsigned int len )
+{
+	int		a,b,c,d;
+
+	d = x & 0x000000ff;
+	c = (x >> 8) & 0x000000ff;
+	b = (x >> 16) & 0x000000ff;
+	a = (x >> 24) & 0x000000ff;
+	snprintf( s, len, "%d.%d.%d.%d", a,b,c,d );
+	s[len-1] = '\0';
+	return s;
+}
+
+long
+get_iaddr_string( char * string )
+{
+	int		a,b,c,d;
+
+	if ( string == 0 )
+	{
+		return 0;
+	}
+	else if ( sscanf( string, "%d.%d.%d.%d", &a, &b, &c, &d ) < 4 )
+	{
+		return 0;
+	}
+	else
+	{
+		return (a<<24) | (b<<16) | (c<<8) | d;
+	}
+}
 void* c_input (void* in){
-	
+	int sd = *(int*) in;
+
 /*take client input and figure out what to do with it*/
 	/*step 1) prompt for user input*/
 	/*step 2) figure out what to do with it - is it a server process
 	or a client process*/
 	/*step 3) uh... */
 
+	char c_cmd[2048];
+	int inputsize;
+	char* ourOutput = "Please enter a command.";
+
+	while((write(1, ourOutput, sizeof(ourOutput))) && (inputsize = read(0, c_cmd, sizeof(c_cmd)) > 0))
+	{
+		/*append null character*/
+		c_cmd[inputsize - 1] = '\0';
+
+		/*make sure client doesn't want to quit*/
+		if(strcmp(c_cmd, "quit") != 0)
+		{
+			printf("Sending your request to the server...");
+			write(sd, c_cmd, strlen(c_cmd)+1);
+
+			/*how do I send the request to the server*/
+
+			sleep(2); /*throttle by 2*/
+		}
+
+		/*does the client want to quit*/
+		else
+		{
+			printf("Goodbye. Your session is terminating.");
+			return;
+		}
+	}
+	return;
+}
+
+
+/*This needs to be modified somehow*/
+void* s_output(void* out){
+
+	int sd = *(int*)out;
+	char s_out [2048];
+
+	pthread_detach(pthread_self());
+
+	while(read(sd, s_out, sizeof(s_out)) > 0){
+		printf("Receiving server output...");
+	}
+	return 0;
 }
 
 int serverconnect(char* server, char* port){
@@ -187,39 +267,4 @@ void spawn_threads(int sd){
 		return;
 	}
 	return;
-}
-
-// A couple of functions for converting IP addresses to and from dotted decimal notation.
-/*taken from BKR*/
-char *
-get_istring( unsigned long x, char * s, unsigned int len )
-{
-	int		a,b,c,d;
-
-	d = x & 0x000000ff;
-	c = (x >> 8) & 0x000000ff;
-	b = (x >> 16) & 0x000000ff;
-	a = (x >> 24) & 0x000000ff;
-	snprintf( s, len, "%d.%d.%d.%d", a,b,c,d );
-	s[len-1] = '\0';
-	return s;
-}
-
-long
-get_iaddr_string( char * string )
-{
-	int		a,b,c,d;
-
-	if ( string == 0 )
-	{
-		return 0;
-	}
-	else if ( sscanf( string, "%d.%d.%d.%d", &a, &b, &c, &d ) < 4 )
-	{
-		return 0;
-	}
-	else
-	{
-		return (a<<24) | (b<<16) | (c<<8) | d;
-	}
 }
