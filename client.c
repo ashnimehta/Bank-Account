@@ -9,6 +9,18 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#define PORT "36963"
+
+void* c_input (void* in){
+	
+/*take client input and figure out what to do with it*/
+	/*step 1) prompt for user input*/
+	/*step 2) figure out what to do with it - is it a server process
+	or a client process*/
+	/*step 3) uh... */
+
+}
+
 int serverconnect(char* server, char* port){
 	
 	struct addrinfo ai;
@@ -19,7 +31,7 @@ int serverconnect(char* server, char* port){
 	addrinfo.ai_flags = 0;
 	addrinfo.ai_family = AF_INET;
 	addrinfo.ai_socktype = SOCK_STREAM;
-	addrinfo.ai_protocol = 0;		// Any protocol
+	addrinfo.ai_protocol = 0;
     addrinfo.ai_addrlen = 0;
     addrinfo.ai_addr = NULL;
     addrinfo.ai_canonname = NULL;
@@ -106,7 +118,7 @@ int main(int argc, char** argv){
 	}
 
 	/*try to connect to the server every three seconds*/
-	while((sd = serverconnect(argv[1], "36963")) != 0)
+	while((sd = serverconnect(argv[1], PORT)) != 0)
 	{
 		sleep(3);
 	}
@@ -115,13 +127,66 @@ int main(int argc, char** argv){
 	printf("Success! Client connected to server.");
 
 	/*spawn threads*/
+	/*lmao now what*/
+	spawn_threads(sd);
 	
 	close(sd);
+
+	/*Disconnect from server*/
+	printf("Client has disconnected from the server.");
 	
 	return 0; /*success*/
+}
 
+void spawn_threads(int sd){
+	/*use two threads and join on input, so we can keep accepting input*/
+	pthread_t cinput;
+	pthread_t coutput;
+	pthread_attr_t kernel;
+	int* sdptr;
 
+	/*taken from BKR client code on site*/
+	if(!pthread_attr_init(&kernel))
+	{
+		printf("ERROR: pthread_attr_init failed.");
+		exit(1);
+	}
+	
+	/*check to see if the thread gets resources from the same place as
+	all other threads in the scheduling allocaiton domain*/
 
+	else if(!pthread_attr_setscope(&kernel, PTHREAD_SCOPE_SYSTEM))
+	{
+		printf ("ERROR: pthread_attr_setscope failed.");
+		exit(1);
+	}
+	else
+	{
+		sdptr = (int*) malloc(sizeof(sd));
+		*sdptr = sd;
+
+		if(pthread_create(&cinput, &kernel, c_input, sdptr) != 0)
+		{
+			printf("pthread_create() failed.");
+			exit(1);
+		}
+		if(pthread_create(&coutput, &kernel, c_output, sdptr) != 0)
+		{
+			printf("pthread_create() failed.");
+			exit(1);
+		}
+
+		/*join the two threads*/
+
+		if(pthread_join(cinput, NULL) != 0){
+			printf("pthread_join() failed.");
+			exit(1);
+		}
+
+		free(sdptr);
+		return;
+	}
+	return;
 }
 
 // A couple of functions for converting IP addresses to and from dotted decimal notation.
