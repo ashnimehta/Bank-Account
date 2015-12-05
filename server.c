@@ -208,8 +208,7 @@ int main (int argc, char** argv){
         close( sd );
         return 0;
     }
-    //they created a function for creating the shared memory so we need to include a check and/or initialization for the function that we would create here
-
+	shm_setup();
         while ( (fd = accept( sd, (sockptr)&address, &address_len )) != -1 ){
             if ((child = fork()) < 0){
                 //process not created
