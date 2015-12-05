@@ -56,8 +56,8 @@ void* c_input (void* in){
 		/*append null character*/
 		c_cmd[inputsize - 1] = '\0';
 
-		/*make sure client doesn't want to quit*/
-		if(strcmp(c_cmd, "quit") != 0)
+		/*make sure client doesn't want to exit*/
+		if(strcmp(c_cmd, "exit") != 0)
 		{
 			printf("Sending your request to the server...");
 			write(sd, c_cmd, strlen(c_cmd)+1);
@@ -67,7 +67,7 @@ void* c_input (void* in){
 			sleep(2); /*throttle by 2*/
 		}
 
-		/*does the client want to quit*/
+		/*does the client want to exit*/
 		else
 		{
 			printf("Goodbye. Your session is terminating.");
