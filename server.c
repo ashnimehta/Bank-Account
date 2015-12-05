@@ -199,7 +199,7 @@ int claim_port( const char * port )
     }
 }
 
-int makeAccount(string name, int fd){
+int makeAccount(String name, int fd){
 
     int i;
     int num = glob_shm_addr->currAccounts;
