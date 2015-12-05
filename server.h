@@ -9,13 +9,13 @@ typedef struct Account{
 	char name[100];
 	float balance;
 	int isf; /*in session flag*/
-	sem_t acc_lock; /*lock the account while in use by client thread*/
+	sem_t lock; /*lock the account while in use by client thread*/
 } account;
 
 typedef struct Bank{
 	int currAccounts;
 	Account acc_arr[20];
-	sem_t bank_lock; /*lock the bank while printing*/
+	sem_t lock; /*lock the bank while printing*/
 } Bank;
 
 void alarmhandler(int sig);
