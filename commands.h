@@ -3,9 +3,9 @@
 
 #include "bankAccount.h"
 
-int debit(float amount, bankAccount account);
-int credit(float amount, bankAccount account);
-float currentbalance(bankAccount account);
+int debit(float amount, Account account);
+int credit(float amount, Account account);
+float currentbalance(Account account);
 
 
 
