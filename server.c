@@ -5,6 +5,51 @@ static char glob_sd;
 static Bank* glob_shm_addr;
 static int glob_shm_id;
 
+int detrequest(int fd, String command){
+    String arg1 = malloc(6);
+    String arg2 = malloc(101);
+    int function;
+    if(!command){
+        //error
+        return -1;
+    }
+    if(strcmp(command,"balance")==0){
+        function = 1;
+        //enter balance function
+    }
+    else if(strcmp(command,"finish")==0){
+        function = 2;
+        //finish
+
+    }
+    if(sscanf(command,"%s %s"arg1,arg2)!=2){
+        //error
+        return -1;
+    }
+
+    if(strcmp(arg1,"open")==0){
+        function = 3;
+        //open new account
+
+    }
+    else if(strcmp(arg1,"start")==0){
+        function = 4;
+        //start customer session
+
+    }
+    else if(strcmp(arg1,"credit")==0){
+        function = 5;
+        //enter credit function
+
+    }
+    else if(strcmp(arg1,"debit")==0){
+        function = 6;
+        //enter debit function
+
+    }
+    return function;
+}
+
 void alarmhandler(int sig){
     sigset_t alarmset;
     sigemptyset (&alarmset);
