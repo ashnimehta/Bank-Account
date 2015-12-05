@@ -5,7 +5,7 @@
 /*use a semamphore because oracle lists it as one of the synchronization
 mechanisms*/
 
-typedef struct BAccount{
+typedef struct Account{
 	char name[100];
 	float balance;
 	int isf; /*in session flag*/
