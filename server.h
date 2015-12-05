@@ -18,3 +18,12 @@ typedef struct Bank{
 	sem_t bank_lock; /*lock the bank while printing*/
 } Bank;
 
+void alarmhandler(int sig);
+void childhandler(int sig);
+void inthandler(int sig);
+void alarmSetup(sigaction* sig);
+void intSetup(sigaction* sig);
+void chldSetup(sigaction* sig);
+int claim_port( const char * port );
+
+

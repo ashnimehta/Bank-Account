@@ -14,3 +14,6 @@
 #include <sys/time.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+
+typedef char* String;
+typedef struct sockaddr* sockptr;
