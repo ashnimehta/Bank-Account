@@ -1,5 +1,10 @@
 #include "server.h"
 
+static int index;
+static char glob_sd;
+static Bank* glob_shm_addr;
+static int glob_shm_id;
+
 void alarmhandler(int sig){
     sigset_t alarmset;
     sigemptyset (&alarmset);
