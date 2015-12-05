@@ -6,6 +6,7 @@
 /*taken from BKR*/
 /*Don't know if these are helpful yet but I included them below*/
 
+/*
 char *
 get_istring( unsigned long x, char * s, unsigned int len )
 {
@@ -38,6 +39,9 @@ get_iaddr_string( char * string )
 		return (a<<24) | (b<<16) | (c<<8) | d;
 	}
 }
+
+*/
+
 void* c_input (void* in){
 	int sd = *(int*) in;
 
