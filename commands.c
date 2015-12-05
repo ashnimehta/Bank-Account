@@ -1,6 +1,6 @@
 #define MAX_ACCOUNTS 20
 
-int debit(float amount, bankAccount account){
+int debit(float amount, Account account){
 	//include check here to make sure client is in a valid customer session, otherwise error and return -1
 
 	if(!account){
@@ -21,7 +21,7 @@ int debit(float amount, bankAccount account){
 	return 0;
 }
 
-int credit(float amount, bankAccount account){
+int credit(float amount, Account account){
 	//include check here to make sure client is in a valid customer session, otherwise error and return -1
 
 	if(!account){
@@ -38,7 +38,7 @@ int credit(float amount, bankAccount account){
 	return 0;
 }
 
-float currentbalance(bankAccount account){
+float currentbalance(Account account){
 	//include check here to make sure client is in a valid customer session, otherwise error and return -1
 	if(!account){
 		//report error, NULL account passed
