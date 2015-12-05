@@ -47,6 +47,8 @@ int detrequest(int fd, String command){
         //enter debit function
 
     }
+    free(arg1);
+    free(arg2);
     return function;
 }
 
