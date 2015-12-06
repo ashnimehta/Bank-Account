@@ -402,8 +402,7 @@ int makeAccount(String name, int fd){
 int main (int argc, char** argv){
 	/*whaaaaaaat in the world*/
 	/*ok let's focus*/
-
-	int sd;
+    int sd;
     char message[256];
     pthread_attr_t kernel_attr;
     socklen_t address_len;
@@ -415,25 +414,21 @@ int main (int argc, char** argv){
     struct sigaction sigalrm;
 
     alarmSetup(sigalrm);
-    //alarm(3); not sure why this is necessary
+    alarm(3);
 
-
-    
     chldSetup(sigchld);
     if (sigaction(SIGCHLD, &sigchld, NULL) == -1) {
         perror("sigchld error");
         exit(1);
     }
+    
     intSetup(sigint);
     if (sigaction(SIGINT, &sigint, NULL) == -1) {
         perror("sigint error");
         exit(1);
     }
 
-
-
-
-        if ( pthread_attr_init( &kernel_attr ) != 0 )
+    if ( pthread_attr_init( &kernel_attr ) != 0 )
     {
         printf( "pthread_attr_init() failed in file %s line %d\n", __FILE__, __LINE__ );
         return 0;
@@ -445,7 +440,7 @@ int main (int argc, char** argv){
     }
     else if ( (sd = claim_port( "36963" )) == -1 )
     {
-        write( 1, message, sprintf( message,  "\x1b[1;31mCould not bind to port %s errno %s\x1b[0m\n", "51268", strerror( errno ) ) );
+        write( 1, message, sprintf( message,  "\x1b[1;31mCould not bind to port %s errno %s\x1b[0m\n", "36963", strerror( errno ) ) );
         return 1;
     }
     else if ( listen( sd, 100 ) == -1 )
