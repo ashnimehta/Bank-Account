@@ -44,40 +44,45 @@ get_iaddr_string( char * string )
 
 void* c_input (void* in){
 	int sd = *(int*) in;
-
+  String arg1 = malloc(6);
+  String arg2 = malloc(108);
 /*take client input and figure out what to do with it*/
 	/*step 1) prompt for user input*/
 	/*step 2) figure out what to do with it - is it a server process
 	or a client process*/
 	/*step 3) uh... */
 
-	char c_cmd[2048];
+	char c_cmd[200];
 	int inputsize;
 	char* ourOutput = "Please enter a command.";
+  inputsize=0;
 
-	while((write(1, ourOutput, sizeof(ourOutput))) && (inputsize = read(0, c_cmd, sizeof(c_cmd)) > 0))
+	while((printf("%s\n",ourOutput)) && (inputsize = read(0, c_cmd, 200) > 0))
 	{
 		/*append null character*/
-		c_cmd[inputsize - 1] = '\0';
-
+    sscanf(c_cmd,"%s %s",arg1,arg2);
 		/*make sure client doesn't want to exit*/
-		if(strcmp(c_cmd, "exit") != 0)
-		{
+		
 			printf("Sending your request to the server...");
 			write(sd, c_cmd, strlen(c_cmd)+1);
-
 			/*how do I send the request to the server*/
 
-			sleep(2); /*throttle by 2*/
-		}
+			
+		
 
 		/*does the client want to exit*/
-		else
-		{
+		
+		if(strcmp(arg1,"exit")==0){
 			printf("Goodbye. Your session is terminating.");
+      free(arg1);
+      free(arg2);
 			return 0;
 		}
+    sleep(2); /*throttle by 2*/
+    memset (c_cmd, 0, 200);
 	}
+  free(arg1);
+  free(arg2);
 	return 0;
 }
 
@@ -91,7 +96,7 @@ void* s_output(void* out){
 	pthread_detach(pthread_self());
 
 	while(read(sd, s_out, sizeof(s_out)) > 0){
-		printf("Receiving server output...");
+		printf("Receiving server output...%s\n",s_out);
 	}
 	return 0;
 }
@@ -182,8 +187,6 @@ int serverconnect(char* server, char* port){
     	}
     	else{
     		freeaddrinfo(res);
-        printf("????????????????????????????\n");
-         printf("sd is %d\n",sd);
     		return sd; /*success*/
     	}
 
@@ -260,7 +263,7 @@ int main(int argc, char** argv){
 	}
 
 	/*Section 8, requirement 1 - announce completion of connection to server*/
-	printf("Success! Client connected to server.");
+	printf("Success! Client connected to server.\n");
 
 	/*spawn threads*/
 	/*lmao now what*/
@@ -269,7 +272,7 @@ int main(int argc, char** argv){
 	close(sd);
 
 	/*Disconnect from server*/
-	printf("Client has disconnected from the server.");
+	printf("Client has disconnected from the server.\n");
 	
 	return 0; /*success*/
 }
