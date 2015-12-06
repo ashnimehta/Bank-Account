@@ -167,16 +167,23 @@ int serverconnect(char* server, char* port){
     	return -1;
     }
 
-    /*now we know that getaddrinfo worked*/
+    else if ((sd = socket( res->ai_family, res->ai_socktype, res->ai_protocol )) == -1 )
+    {
+        freeaddrinfo( res );
+        return -1;
+    }
 
+    /*now we know that getaddrinfo worked*/
     do{
     	if(connect(sd, res->ai_addr, res -> ai_addrlen) == -1)
     	{
     		sleep(3);
-    		printf("Attempting to connect to server");
+    		printf("Attempting to connect to server\n");
     	}
     	else{
     		freeaddrinfo(res);
+        printf("????????????????????????????\n");
+         printf("sd is %d\n",sd);
     		return sd; /*success*/
     	}
 
@@ -194,7 +201,7 @@ void spawn_threads(int sd){
    int* sdptr;
 
    /*taken from BKR client code on site*/
-   if(!pthread_attr_init(&kernel))
+   if(pthread_attr_init(&kernel) != 0)
    {
       printf("ERROR: pthread_attr_init failed.");
       exit(1);
@@ -203,7 +210,7 @@ void spawn_threads(int sd){
    /*check to see if the thread gets resources from the same place as
    all other threads in the scheduling allocaiton domain*/
 
-   else if(!pthread_attr_setscope(&kernel, PTHREAD_SCOPE_SYSTEM))
+   else if(pthread_attr_setscope(&kernel, PTHREAD_SCOPE_SYSTEM)!= 0)
    {
       printf ("ERROR: pthread_attr_setscope failed.");
       exit(1);
@@ -246,9 +253,8 @@ int main(int argc, char** argv){
 		printf("Please enter the name of the machine running the server process as a command line argument.\n");
 		exit(1);
 	}
-
 	/*try to connect to the server every three seconds*/
-	while((sd = serverconnect(argv[1], PORT)) != 0)
+	while((sd = serverconnect(argv[1], "36963")) == -1)
 	{
 		sleep(3);
 	}

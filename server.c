@@ -1,6 +1,6 @@
 #include "server.h"
 
-static int index;
+static int INDEX;
 static Bank* glob_shm_addr;
 static int busy=0;
 static int currentfd;
@@ -33,7 +33,7 @@ void printlist()
             flagval = "false";
         }
         else flagval = "true";
-        sprintf(printedoutput[i], "Account at index %d: Name = %s, Balance = %.2f, In Session = %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i].balance, flagval);
+        sprintf(printedoutput[i], "Account at INDEX %d: Name = %s, Balance = %.2f, In Session = %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i].balance, flagval);
     }
 
     for (j = 0; j<glob_shm_addr->currAccounts; j++){
@@ -59,8 +59,8 @@ int finish(){
         return -1;
     }
     busy = 0;
-    glob_shm_addr->acc_arr[index].isf=0;
-    sem_post(&glob_shm_addr->acc_arr[index].lock);
+    glob_shm_addr->acc_arr[INDEX].isf=0;
+    sem_post(&glob_shm_addr->acc_arr[INDEX].lock);
     return 0;
 }
 
@@ -89,9 +89,9 @@ int start(String accname){
         write(currentfd, message, strlen(message)+1);
         return -1;
     }
-    index = current;
-    sem_wait(&glob_shm_addr->acc_arr[index].lock);
-    glob_shm_addr->acc_arr[index].isf = 1;
+    INDEX = current;
+    sem_wait(&glob_shm_addr->acc_arr[INDEX].lock);
+    glob_shm_addr->acc_arr[INDEX].isf = 1;
     busy = 1;
     return 0;
 }
@@ -114,8 +114,8 @@ int detrequest(){
     }
     if(strcmp(command, "exit") == 0){
     	if(busy){
-		sem_post(&glob_shm_addr->acc_arr[index].lock);
-		glob_shm_addr->acc_arr[index].isf = 0;
+		sem_post(&glob_shm_addr->acc_arr[INDEX].lock);
+		glob_shm_addr->acc_arr[INDEX].isf = 0;
 	}
 	exit(0);
     }
@@ -168,7 +168,7 @@ int balance(){
     char output [256];
     memset (output, 0, 256);
     
-    sprintf(output, "Current balance is %.2f", glob_shm_addr->acc_arr[index].balance);
+    sprintf(output, "Current balance is %.2f", glob_shm_addr->acc_arr[INDEX].balance);
     write(currentfd, output, strlen(output) + 1);
     return 1; /*balance function code is 1*/
 }
@@ -178,16 +178,16 @@ int credit(float amount){
     if(busy == 0)
         return -1;
     
-    acc_curr_val = glob_shm_addr->acc_arr[index].balance;
+    acc_curr_val = glob_shm_addr->acc_arr[INDEX].balance;
     if(amount<=0){
     	return -1;
     }
-        glob_shm_addr->acc_arr[index].balance = acc_curr_val + amount;
+        glob_shm_addr->acc_arr[INDEX].balance = acc_curr_val + amount;
         
     char output [256];
     memset (output, 0, 256);
     
-    sprintf(output, "CREDIT: New balance is %.2f", glob_shm_addr->acc_arr[index].balance);
+    sprintf(output, "CREDIT: New balance is %.2f", glob_shm_addr->acc_arr[INDEX].balance);
     write(currentfd, output, strlen(output)+ 1);
     return 5;
 }
@@ -196,17 +196,17 @@ int debit(float amount){
     if(busy == 0)
         return -1;
     float acc_curr_val;
-    acc_curr_val = glob_shm_addr->acc_arr[index].balance;
+    acc_curr_val = glob_shm_addr->acc_arr[INDEX].balance;
     if(amount <= 0)
         return -1;
     if(amount > acc_curr_val)
         return -1;
-    glob_shm_addr->acc_arr[index].balance = acc_curr_val - amount;
+    glob_shm_addr->acc_arr[INDEX].balance = acc_curr_val - amount;
     
     char output [256];
     memset (output, 0, 256);
     
-    sprintf(output, "DEBIT: New balance is %.2f", glob_shm_addr->acc_arr[index].balance);
+    sprintf(output, "DEBIT: New balance is %.2f", glob_shm_addr->acc_arr[INDEX].balance);
     write(currentfd, output, strlen(output)+ 1);
     
     return 6;
@@ -220,13 +220,13 @@ void alarmSetup(struct sigaction* sig){
 
 void intSetup(struct sigaction* sig){
     sig->sa_handler = inthandler;
-    sigemptyset(sig->sa_mask);
+    sigemptyset(&sig->sa_mask);
     sig->sa_flags = 0;
 }
 
 void chldSetup(struct sigaction* sig){
     sig->sa_handler = childhandler; // reap all dead processes
-    sigemptyset(sig->sa_mask);
+    sigemptyset(&sig->sa_mask);
     sig->sa_flags = SA_RESTART;
 }
 
@@ -241,8 +241,9 @@ void alarmhandler(int sig){
 }
 
 void childhandler(int sig){
-    while (waitpid((pid_t)(-1), 0, WNOHANG) > 0) {
-        printf("WE BE KILLIN 'EM!\n");
+    
+    while((waitpid(-1, NULL, WNOHANG)) > 0) {
+        printf("Killing child process\n");
     }
 }
 
@@ -421,7 +422,7 @@ int main (int argc, char** argv){
     struct sigaction sigalrm;
 
     alarmSetup(&sigalrm);
-    alarm(3);
+    //alarm(3);
 
     chldSetup(&sigchld);
     if (sigaction(SIGCHLD, &sigchld, NULL) == -1) {

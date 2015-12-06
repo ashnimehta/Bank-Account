@@ -1,16 +1,19 @@
 CC = gcc
-CFLAGS = -Wall -g -std=c99 -pedantic -D_XOPEN_SOURCE=600 -pthread
+CFLAGS = -g -D_GNU_SOURCE -D_POSIX_C_SOURCE -Wall -Werror -std=c99 -pedantic -pthread
 
-all: server client
+all: client server
+
+client: client.c
+	$(CC) $(CFLAGS) -o client client.c client.h utils.h
 
 server: server.c
 	$(CC) $(CFLAGS) -o server server.c server.h utils.h
 
-client: client.c
-	$(CC) $(CFLAGS) -o client client.c client.h utils.h
 
 clean:
 	-rm -rf client.dSYM
 	-rm -rf server.dSYM
 	-rm client
 	-rm server
+
+	
