@@ -51,7 +51,7 @@ void printlist()
     return;
 }
 
-int finish(int fd){
+int finish(){
     char message [300];
     memset (message, 0, 300);
     if(busy==0){
@@ -75,7 +75,7 @@ int findaccount(String accname){
 }
 
 
-int start(int fd,String accname){
+int start(String accname){
     int current;
     char message [300];
     memset (message, 0, 300);
@@ -94,7 +94,7 @@ int start(int fd,String accname){
     return 0;
 }
 
-int detrequest(int fd, String command){
+int detrequest(int fd){
     String arg1 = malloc(6);
     String arg2 = malloc(101);
     float amount;
@@ -158,7 +158,7 @@ int balance(req){
     memset (output, 0, 256);
     
     sprintf(output, "Current balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
-    write(fd, output, strlen(output) + 1);
+    write(currentfd, output, strlen(output) + 1);
     return 1; /*balance function code is 1*/
 }
 
@@ -346,7 +346,7 @@ int claim_port( const char * port )
     }
 }
 
-int makeAccount(String name, int fd){
+int makeAccount(String name){
     int i;
     int num = glob_shm_addr->currAccounts;
 
