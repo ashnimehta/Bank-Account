@@ -17,7 +17,7 @@ void printlist()
     memset(ourout, 0, 1500);
 
     if(glob_shm_addr->currAccounts <= 0){
-        write(1, noAcc, strlen(NoAcc));
+        write(1, noAcc, strlen(NoAcc) + 1);
         return;
     }    
     
