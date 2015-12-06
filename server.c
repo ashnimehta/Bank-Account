@@ -259,7 +259,7 @@ void shm_setup()
     if ((shm_id = shmget(key, sizeof(Bank), IPC_CREAT | 0666)) < 0)
     {
         message = "Error: shmget() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
     
@@ -268,7 +268,7 @@ void shm_setup()
     if (*(int*)(glob_shm_addr = shmat(shm_id, NULL, 0)) == -1)
     {
         message = "ERROR: shmat() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
 
@@ -284,14 +284,14 @@ void shm_setup()
     if ((shm_id = shmget(key, sizeof(Bank), 0666)) < 0)
     {
         message = "Error: shmget() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
 
     if (*(int*)(glob_shm_addr = shmat(shm_id, NULL, 0)) == -1)
     {
         message = "ERROR: shmat() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
 }
