@@ -4,7 +4,7 @@ static int INDEX;
 static Bank* glob_shm_addr;
 static int busy=0;
 static int currentfd;
-
+static int glob_shmid;
 void printlist()
 {
    String noAcc = "No accounts are currently in the bank.";
@@ -43,8 +43,8 @@ void printlist()
     outlen = strlen(ourout);
 
     /*write to stdout*/
-    write(currentfd, ourout, outlen + 1);
-
+    write(1, ourout, outlen + 1);
+    printf("\n");
     /*unlock the mutex*/
     sem_post(&glob_shm_addr->lock);
     return;
@@ -97,6 +97,7 @@ int start(String accname){
 }
 
 int detrequest(){
+    printf("Server is receiving input...");
     String arg1 = malloc(6);
     String arg2 = malloc(101);
     float amount;
@@ -106,68 +107,99 @@ int detrequest(){
     memset (command, 0, 300);
     
     while ( read(currentfd, command, sizeof(command) ) > 0 ){
-    
-    if(strcmp(command, "") == 0) {
-        strcpy(message, "Not a valid command.");
-        write(currentfd, message, strlen(message)+1);
-        return -1;
-    }
-    if(strcmp(command, "exit") == 0){
-    	if(busy){
+    sscanf(command,"%s %s",arg1,arg2);
+    if(strcmp(arg1, "exit") == 0){
+    	if(busy==1){
 		sem_post(&glob_shm_addr->acc_arr[INDEX].lock);
 		glob_shm_addr->acc_arr[INDEX].isf = 0;
+        busy = 0;
 	}
+    free(arg1);
+    free(arg2);
 	exit(0);
     }
-    else if(strcmp(command,"balance")==0){
+    else if(strcmp(arg1,"balance")==0){
         balance();
+        memset (message, 0, 300);
+        memset (command, 0, 300);
+        continue;
     }
-    else if(strcmp(command,"finish")==0){
+    else if(strcmp(arg1,"finish")==0){
         finish();
+        memset (message, 0, 300);
+        memset (command, 0, 300);
+        continue;
 
     }
     if(sscanf(command,"%s %s",arg1,arg2)!=2){
-        strcpy(message, "Not a valid command.");
+        strcpy(message, "Not a valid command.\n");
         write(currentfd, message, strlen(message)+1);
         return -1;
     }
 
     if(strcmp(arg1,"open")==0){
         makeAccount(arg2);
-
+        memset (message, 0, 300);
+        memset (command, 0, 300);
+        continue;
     }
     else if(strcmp(arg1,"start")==0){
         start(arg2);
+        memset (message, 0, 300);
+    memset (command, 0, 300);
 
     }
     else if(strcmp(arg1,"credit")==0){
-        if((amount=atof(arg2))==0.0){
-            strcpy(message, "Not a valid amount.");
+        if((amount=atof(arg2))<=0.0){
+            strcpy(message, "Not a valid amount. \n");
             write(currentfd, message, strlen(message)+1);
+            memset (message, 0, 300);
+             memset (command, 0, 300);
+            continue;
         }
         credit(amount);
+        memset (message, 0, 300);
+    memset (command, 0, 300);
 
     }
     else if(strcmp(arg1,"debit")==0){
-        if((amount=atof(arg2))==0.0){
-            strcpy(message, "Not a valid amount.");
+        if((amount=atof(arg2))<=0.0){
+            strcpy(message, "Not a valid amount.\n");
             write(currentfd, message, strlen(message)+1);
+            memset (message, 0, 300);
+    memset (command, 0, 300);
+    continue;
         }
         debit(amount);
+        memset (message, 0, 300);
+    memset (command, 0, 300);
     }
+    else{
+        strcpy(message, "Not a valid command.\n");
+        write(currentfd, message, strlen(message)+1);
+        memset (message, 0, 300);
+        memset (command, 0, 300);
+        continue;
+        }
+    memset (message, 0, 300);
+    memset (command, 0, 300);
     }
+    
     free(arg1);
     free(arg2);
     return 0;
 }
 
 int balance(){
-    if(busy == 0)
+    char message [2048];
+    if(busy == 0){
+        strcpy(message, "You are not currently in a session.\n");
+        write(currentfd, message, strlen(message)+1);
         return -1;
+    }
     
     char output [256];
     memset (output, 0, 256);
-    
     sprintf(output, "Current balance is %.2f", glob_shm_addr->acc_arr[INDEX].balance);
     write(currentfd, output, strlen(output) + 1);
     return 1; /*balance function code is 1*/
@@ -175,11 +207,16 @@ int balance(){
 
 int credit(float amount){
     int acc_curr_val;
-    if(busy == 0)
+    char message [2048];
+    if(busy == 0){
+        strcpy(message, "You are not currently in a session.");
+        write(currentfd, message, strlen(message)+1);
         return -1;
-    
+    }
     acc_curr_val = glob_shm_addr->acc_arr[INDEX].balance;
-    if(amount<=0){
+    if(amount<=0.0){
+        strcpy(message, "Not a valid amount. \n");
+            write(currentfd, message, strlen(message)+1);
     	return -1;
     }
         glob_shm_addr->acc_arr[INDEX].balance = acc_curr_val + amount;
@@ -193,13 +230,21 @@ int credit(float amount){
 }
 
 int debit(float amount){
-    if(busy == 0)
+    char message [2048];
+    if(busy == 0){
+        strcpy(message, "You are not currently in a session.");
+        write(currentfd, message, strlen(message)+1);
         return -1;
+    }
     float acc_curr_val;
     acc_curr_val = glob_shm_addr->acc_arr[INDEX].balance;
     if(amount <= 0)
+        strcpy(message, "Not a valid amount. \n");
+            write(currentfd, message, strlen(message)+1);
         return -1;
     if(amount > acc_curr_val)
+        strcpy(message, "Cannot debit more than current account balance.\n");
+            write(currentfd, message, strlen(message)+1);
         return -1;
     glob_shm_addr->acc_arr[INDEX].balance = acc_curr_val - amount;
     
@@ -248,15 +293,14 @@ void childhandler(int sig){
 }
 
 void inthandler(int sig){
-    // if (shmdt(glob_shm_addr) != 0) { //clear up all shared memory
-    //     perror("shmdt");
-    //     exit(1);
-    // }
+     if (shmdt(glob_shm_addr) != 0) { //clear up all shared memory
+   perror("shmdt");
+         exit(1);
+     }
 
-    // shmctl(glob_shmid, IPC_RMID, NULL);
-    // write(glob_sd, "disconnect", 11); //kill client process
+     shmctl(glob_shmid, IPC_RMID, NULL);
+     write(currentfd, "disconnect", 11); //kill client process
 
-    //DO WE WANT THIS?????????????????????????????????????????????????????????????
     exit(0);
 }
 
@@ -275,7 +319,7 @@ void shm_setup()
         write(1, message, strlen(message)+1);
         exit(1);
     }
-    
+    glob_shmid = shm_id;
     if (*(int*)(glob_shm_addr = shmat(shm_id, NULL, 0)) == -1)
     {
         strcpy(message,"ERROR: shmat() failed.");
@@ -395,7 +439,7 @@ int makeAccount(String name){
     /*set the values of this new account*/
     int namelength = strlen(name);
     glob_shm_addr->acc_arr[num].name[namelength] = '\0';
-    glob_shm_addr->acc_arr[num].balance = 0;
+    glob_shm_addr->acc_arr[num].balance = 0.0;
     glob_shm_addr->acc_arr[num].isf = 0;
     glob_shm_addr->currAccounts++;
 
@@ -412,17 +456,19 @@ int main (int argc, char** argv){
 	/*ok let's focus*/
     int sd;
     char message[256];
+
     pthread_attr_t kernel_attr;
     socklen_t address_len;
     int fd;
     struct sockaddr_in address;
     pid_t child;
+
     struct sigaction sigint;
     struct sigaction sigchld;
     struct sigaction sigalrm;
 
     alarmSetup(&sigalrm);
-    //alarm(3);
+    alarm(20);
 
     chldSetup(&sigchld);
     if (sigaction(SIGCHLD, &sigchld, NULL) == -1) {
@@ -460,13 +506,12 @@ int main (int argc, char** argv){
 	shm_setup();
         while ( (fd = accept( sd, (sockptr)&address, &address_len )) != -1 ){
             if ((child = fork()) < 0){
-                //process not created
                 continue;
             }
            if(child==0){
             close(sd);
             currentfd = fd;
-            //send child off to do whatever the client wants
+            detrequest();
             close(fd);
            }
            else{
