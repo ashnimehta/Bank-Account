@@ -6,6 +6,51 @@ static Bank* glob_shm_addr;
 static int glob_shm_id;
 static int busy=0;
 
+void printlist()
+{
+   String noAcc = "No accounts are currently in the bank.";
+    
+    char printedoutput[20][150];
+    String flagval;
+    
+    char ourout[1500];
+    memset(ourout, 0, 1500);
+
+    if(glob_shm_addr->currAccounts <= 0){
+        write(1, noAcc, strlen(NoAcc));
+        return;
+    }    
+    
+    /*Lock the bank*/
+    sem_wait(&glob_shm_addr -> lock);
+
+    int i;
+    int j;
+    
+    /*Read in the bank values*/
+    for(i = 0; i < glob_shm_addr->currAccounts; i++){
+        if(glob_shm_addr->acc_arr[i]->isf == 0)
+        {
+            flagval = "false";
+        }
+        else flagval = true;
+        sprintf(printedoutput[i], "Account at index %d: Name = %s, Balance = %.2f, In Session = %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i]->balance, flagval);
+    }
+
+    for (j = 0; j<glob_shm_addr->currAccounts; j++){
+        strcat(ourout, printedoutput[j]);
+    }
+
+    outlen = strlen(outlen);
+
+    /*write to stdout*/
+    write(1, ourout, outlen + 1);
+
+    /*unlock the mutex*/
+    sem_post(&glob_shm_addr->lock);
+    return;
+}
+
 int finish(int fd){
     if(busy==0){
         write(fd, message, sprintf("You are not currently in a session."));        
