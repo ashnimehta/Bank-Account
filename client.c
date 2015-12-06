@@ -72,12 +72,12 @@ void* c_input (void* in){
 
 		/*does the client want to exit*/
 		
-		if(strcmp(arg1,"exit")==0){
-			printf("Goodbye. Your session is terminating.");
-      free(arg1);
-      free(arg2);
-			return 0;
-		}
+	if(strcmp(arg1,"exit")==0){
+		printf("Disconnecting from server.");
+                free(arg1);
+                free(arg2);
+		return 0;
+	}
     sleep(2); /*throttle by 2*/
     memset (c_cmd, 0, 200);
 	}
@@ -112,10 +112,10 @@ int serverconnect(char* server, char* port){
 	ai.ai_family = AF_INET;
 	ai.ai_socktype = SOCK_STREAM;
 	ai.ai_protocol = 0;
-    ai.ai_addrlen = 0;
-    ai.ai_addr = NULL;
-    ai.ai_canonname = NULL;
-    ai.ai_next = NULL;
+        ai.ai_addrlen = 0;
+        ai.ai_addr = NULL;
+        ai.ai_canonname = NULL;
+        ai.ai_next = NULL;
 
     int sd; /*socket descriptor*/
 
