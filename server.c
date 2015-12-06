@@ -81,6 +81,48 @@ int detrequest(int fd, String command){
     return function;
 }
 
+int balance(req){
+    if(busy == 0)
+        return -1;
+    
+    char output [256];
+    memset (output, 0, 256);
+    
+    sprintf(output, "Current balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
+    strcpy(req, output);
+    output[strlen(output)] = '\0';
+    
+    return 1; /*balance function code is 1*/
+}
+
+int credit(char* amount){
+    if(busy == 0)
+        return -1;
+    
+    tbd = atof(amount);
+    acc_curr_val = glob_shm_addr->acc_arr[index]->balance;
+    
+    if(tbc > 0)
+    {
+        glob_shm_addr->acc_arr[index]->balance = acc_curr_val + tbd;
+    }
+
+    return 5;
+}
+
+int debit(char* amount){
+    if(busy == 0)
+        return -1;
+    acc_curr_val = glob_shm_addr->acc_arr[index]->balance;
+    tbd = atof(amount);
+    if(tbd <= 0)
+        return -1;
+    if(tbd > acc_curr_val)
+        return -1;
+    glob_shm_addr->acc_arr[index]->balance = acc_curr_val - tbd;
+    return 6;
+}
+
 void alarmhandler(int sig){
     sigset_t alarmset;
     sigemptyset (&alarmset);
