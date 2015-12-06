@@ -5,6 +5,7 @@ static char glob_sd;
 static Bank* glob_shm_addr;
 static int glob_shm_id;
 static int busy=0;
+static int currentfd;
 
 void printlist()
 {
@@ -80,11 +81,11 @@ int start(String accname){
     char message [300];
     memset (message, 0, 300);
     if(busy==1){
-        write(fd, message, sprintf("You are already in a session."));
+        write(currentfd, message, sprintf("You are already in a session."));
         return -1;
     }
     if((current=findaccount(accname))==-1){
-        write(fd, message, sprintf("Account does not exist."));
+        write(currentfd, message, sprintf("Account does not exist."));
         return -1;
     }
     index = current;
@@ -102,47 +103,47 @@ int detrequest(){
     char message [300];
     memset (message, 0, 300);
     if(!command){
-        write(fd, message, sprintf("Not a valid command."));
+        write(currentfd, message, sprintf("Not a valid command."));
         return -1;
     }
     if(strcmp(command,"balance")==0){
         function = 1;
-        balance(fd);
+        balance();
     }
     else if(strcmp(command,"finish")==0){
         function = 2;
-        finish(fd);
+        finish();
 
     }
     if(sscanf(command,"%s %s"arg1,arg2)!=2){
-        write(fd, message, sprintf("Not a valid command."));
+        write(currentfd, message, sprintf("Not a valid command."));
         return -1;
     }
 
     if(strcmp(arg1,"open")==0){
         function = 3;
-        makeAccount(arg2,fd);
+        makeAccount(arg2);
 
     }
     else if(strcmp(arg1,"start")==0){
         function = 4;
-        start(fd);
+        start();
 
     }
     else if(strcmp(arg1,"credit")==0){
         function = 5;
         if((amount=atof(arg2))==0.0){
-            write(fd, message, sprintf("Not a valid amount."));
+            write(currentfd, message, sprintf("Not a valid amount."));
         }
-        credit(amount,fd);
+        credit(amount);
 
     }
     else if(strcmp(arg1,"debit")==0){
         function = 6;
         if((amount=atof(arg2))==0.0){
-            write(fd, message, sprintf("Not a valid amount."));
+            write(currentfd, message, sprintf("Not a valid amount."));
         }
-        debit(amount,fd)
+        debit(amount)
 
     }
     free(arg1);
@@ -354,20 +355,20 @@ int makeAccount(String name){
     memset (message, 0, 2048);
     
     if(busy==1){
-    	write(fd, message, sprintf("You cannot create another account while already in a session."));
+    	write(currentfd, message, sprintf("You cannot create another account while already in a session."));
         return -1;
     }
     
     if(num == 20)
     {
-        write(fd, message, sprintf("Sorry, the bank is full and cannot hold a new account."));
+        write(currentfd, message, sprintf("Sorry, the bank is full and cannot hold a new account."));
         return -1;
     }
 
     for(i = 0; i < num; i++){
         if(strcmp(name, glob_shm_addr->acc_arr[i].name) == 0)
         {
-            write(fd, message, sprintf("Sorry, an account with that name already exists."));
+            write(currentfd, message, sprintf("Sorry, an account with that name already exists."));
             return -1;
         }
     }
@@ -451,6 +452,7 @@ int main (int argc, char** argv){
             }
            if(child==0){
             close(sd);
+            currentfd = fd;
             //send child off to do whatever the client wants
             close(fd);
            }
