@@ -229,12 +229,16 @@ int claim_port( const char * port )
 }
 
 int makeAccount(String name, int fd){
-
     int i;
     int num = glob_shm_addr->currAccounts;
 
     char message [2048];
     memset (message, 0, 2048);
+    
+    if(busy==1){
+    	write(fd, message, sprintf("You cannot create another account while already in a session."));
+        return -1;
+    }
     
     if(num == 20)
     {
