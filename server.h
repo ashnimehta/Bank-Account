@@ -25,5 +25,16 @@ void alarmSetup(sigaction* sig);
 void intSetup(sigaction* sig);
 void chldSetup(sigaction* sig);
 int claim_port( const char * port );
+void printlist();
+int finish();
+int findaccount(String accname);
+int start(String accname);
+int detrequest();
+int balance();
+int credit(float amount);
+int debit(float amount);
+void shm_setup();
+int makeAccount(String name);
 
 
+#endif
