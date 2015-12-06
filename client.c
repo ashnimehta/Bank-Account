@@ -75,10 +75,10 @@ void* c_input (void* in){
 		else
 		{
 			printf("Goodbye. Your session is terminating.");
-			return;
+			return 0;
 		}
 	}
-	return;
+	return 0;
 }
 
 
@@ -103,19 +103,20 @@ int serverconnect(char* server, char* port){
 
 	/*initialize the addrinfo struct*/
 
-	addrinfo.ai_flags = 0;
-	addrinfo.ai_family = AF_INET;
-	addrinfo.ai_socktype = SOCK_STREAM;
-	addrinfo.ai_protocol = 0;
-    addrinfo.ai_addrlen = 0;
-    addrinfo.ai_addr = NULL;
-    addrinfo.ai_canonname = NULL;
-    addrinfo.ai_next = NULL;
+	ai.ai_flags = 0;
+	ai.ai_family = AF_INET;
+	ai.ai_socktype = SOCK_STREAM;
+	ai.ai_protocol = 0;
+    ai.ai_addrlen = 0;
+    ai.ai_addr = NULL;
+    ai.ai_canonname = NULL;
+    ai.ai_next = NULL;
 
     int sd; /*socket descriptor*/
 
     int ai_flag = getaddrinfo(server, port, &ai, &res);
 
+    sd=0;
     /*Taken from netdb.h
     But found first on a stackoverflow question */
 
@@ -169,7 +170,7 @@ int serverconnect(char* server, char* port){
     /*now we know that getaddrinfo worked*/
 
     do{
-    	if(connect(sd, result->ai_addr, result -> ai_addrlen) == -1)
+    	if(connect(sd, res->ai_addr, res -> ai_addrlen) == -1)
     	{
     		sleep(3);
     		printf("Attempting to connect to server");
@@ -185,8 +186,62 @@ int serverconnect(char* server, char* port){
     return -1; /*failure*/
 }
 
+void spawn_threads(int sd){
+   /*use two threads and join on input, so we can keep accepting input*/
+   pthread_t cinput;
+   pthread_t coutput;
+   pthread_attr_t kernel;
+   int* sdptr;
+
+   /*taken from BKR client code on site*/
+   if(!pthread_attr_init(&kernel))
+   {
+      printf("ERROR: pthread_attr_init failed.");
+      exit(1);
+   }
+   
+   /*check to see if the thread gets resources from the same place as
+   all other threads in the scheduling allocaiton domain*/
+
+   else if(!pthread_attr_setscope(&kernel, PTHREAD_SCOPE_SYSTEM))
+   {
+      printf ("ERROR: pthread_attr_setscope failed.");
+      exit(1);
+   }
+   else
+   {
+      sdptr = (int*) malloc(sizeof(sd));
+      *sdptr = sd;
+
+      if(pthread_create(&cinput, &kernel, c_input, sdptr) != 0)
+      {
+         printf("pthread_create() failed.");
+         exit(1);
+      }
+      if(pthread_create(&coutput, &kernel, s_output, sdptr) != 0)
+      {
+         printf("pthread_create() failed.");
+         exit(1);
+      }
+
+      /*join the two threads*/
+
+      if(pthread_join(cinput, NULL) != 0){
+         printf("pthread_join() failed.");
+         exit(1);
+      }
+
+      free(sdptr);
+      return;
+   }
+   return;
+}
+
+
 int main(int argc, char** argv){
-	if(argc != 2)
+	int sd;
+   sd=0;
+   if(argc != 2)
 	{
 		printf("Please enter the name of the machine running the server process as a command line argument.\n");
 		exit(1);
@@ -213,53 +268,3 @@ int main(int argc, char** argv){
 	return 0; /*success*/
 }
 
-void spawn_threads(int sd){
-	/*use two threads and join on input, so we can keep accepting input*/
-	pthread_t cinput;
-	pthread_t coutput;
-	pthread_attr_t kernel;
-	int* sdptr;
-
-	/*taken from BKR client code on site*/
-	if(!pthread_attr_init(&kernel))
-	{
-		printf("ERROR: pthread_attr_init failed.");
-		exit(1);
-	}
-	
-	/*check to see if the thread gets resources from the same place as
-	all other threads in the scheduling allocaiton domain*/
-
-	else if(!pthread_attr_setscope(&kernel, PTHREAD_SCOPE_SYSTEM))
-	{
-		printf ("ERROR: pthread_attr_setscope failed.");
-		exit(1);
-	}
-	else
-	{
-		sdptr = (int*) malloc(sizeof(sd));
-		*sdptr = sd;
-
-		if(pthread_create(&cinput, &kernel, c_input, sdptr) != 0)
-		{
-			printf("pthread_create() failed.");
-			exit(1);
-		}
-		if(pthread_create(&coutput, &kernel, c_output, sdptr) != 0)
-		{
-			printf("pthread_create() failed.");
-			exit(1);
-		}
-
-		/*join the two threads*/
-
-		if(pthread_join(cinput, NULL) != 0){
-			printf("pthread_join() failed.");
-			exit(1);
-		}
-
-		free(sdptr);
-		return;
-	}
-	return;
-}

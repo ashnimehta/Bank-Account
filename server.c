@@ -34,7 +34,7 @@ void printlist()
         {
             flagval = "false";
         }
-        else flagval = true;
+        else flagval = "true";
         sprintf(printedoutput[i], "Account at index %d: Name = %s, Balance = %.2f, In Session = %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i]->balance, flagval);
     }
 
@@ -125,7 +125,7 @@ int detrequest(){
         finish();
 
     }
-    if(sscanf(command,"%s %s"arg1,arg2)!=2){
+    if(sscanf(command,"%s %s",arg1,arg2)!=2){
         write(currentfd, message, sprintf("Not a valid command."));
         return -1;
     }
