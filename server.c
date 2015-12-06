@@ -6,6 +6,17 @@ static Bank* glob_shm_addr;
 static int glob_shm_id;
 static int busy=0;
 
+int finish(int fd){
+    if(busy==0){
+        write(fd, message, sprintf("You are not currently in a session."));        
+        return -1;
+    }
+    busy = 0;
+    glob_shm_addr>acc_arr[index].isf=0;
+    sem_post(&glob_shm_addr->acc_arr[index]->lock);
+    return 0;
+}
+
 int findaccount(String accname){
     int i=0;
     for(i=0;i<20;i++){
