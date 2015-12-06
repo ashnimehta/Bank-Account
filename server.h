@@ -14,16 +14,16 @@ typedef struct Account{
 
 typedef struct Bank{
 	int currAccounts;
-	Account acc_arr[20];
+	account acc_arr[20];
 	sem_t lock; /*lock the bank while printing*/
 } Bank;
 
 void alarmhandler(int sig);
 void childhandler(int sig);
 void inthandler(int sig);
-void alarmSetup(sigaction* sig);
-void intSetup(sigaction* sig);
-void chldSetup(sigaction* sig);
+void alarmSetup(struct sigaction* sig);
+void intSetup(struct sigaction* sig);
+void chldSetup(struct sigaction* sig);
 int claim_port( const char * port );
 void printlist();
 int finish();
