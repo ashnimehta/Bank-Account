@@ -107,6 +107,14 @@ int detrequest(){
     memset (command, 0, 300);
     
     while ( read(currentfd, command, sizeof(command) ) > 0 ){
+    	if(strlen(command)<4){
+                strcpy(message, "Not a valid command.\n");
+                write(currentfd, message, strlen(message)+1);
+                memset (message, 0, 300);
+                memset (command, 0, 300);
+                continue;
+
+            }
     sscanf(command,"%s %s",arg1,arg2);
     if(strcmp(arg1, "exit") == 0){
     	if(busy==1){
@@ -134,7 +142,9 @@ int detrequest(){
     if(sscanf(command,"%s %s",arg1,arg2)!=2){
         strcpy(message, "Not a valid command.\n");
         write(currentfd, message, strlen(message)+1);
-        return -1;
+        memset (message, 0, 300);
+        memset (command, 0, 300);
+        continue;
     }
 
     if(strcmp(arg1,"open")==0){
