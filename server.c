@@ -4,52 +4,200 @@ static int index;
 static char glob_sd;
 static Bank* glob_shm_addr;
 static int glob_shm_id;
+static int busy=0;
+static int currentfd;
 
-int detrequest(int fd, String command){
+void printlist()
+{
+   String noAcc = "No accounts are currently in the bank.";
+    
+    char printedoutput[20][150];
+    String flagval;
+    
+    char ourout[1500];
+    memset(ourout, 0, 1500);
+
+    if(glob_shm_addr->currAccounts <= 0){
+        write(currentfd, noAcc, strlen(NoAcc) + 1);
+        return;
+    }    
+    
+    /*Lock the bank*/
+    sem_wait(&glob_shm_addr -> lock);
+
+    int i;
+    int j;
+    
+    /*Read in the bank values*/
+    for(i = 0; i < glob_shm_addr->currAccounts; i++){
+        if(glob_shm_addr->acc_arr[i]->isf == 0)
+        {
+            flagval = "false";
+        }
+        else flagval = true;
+        sprintf(printedoutput[i], "Account at index %d: Name = %s, Balance = %.2f, In Session = %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i]->balance, flagval);
+    }
+
+    for (j = 0; j<glob_shm_addr->currAccounts; j++){
+        strcat(ourout, printedoutput[j]);
+    }
+
+    outlen = strlen(outlen);
+
+    /*write to stdout*/
+    write(currentfd, ourout, outlen + 1);
+
+    /*unlock the mutex*/
+    sem_post(&glob_shm_addr->lock);
+    return;
+}
+
+int finish(){
+    char message [300];
+    memset (message, 0, 300);
+    if(busy==0){
+        write(currentfd, message, sprintf("You are not currently in a session."));        
+        return -1;
+    }
+    busy = 0;
+    glob_shm_addr>acc_arr[index].isf=0;
+    sem_post(&glob_shm_addr->acc_arr[index]->lock);
+    return 0;
+}
+
+int findaccount(String accname){
+    int i=0;
+    for(i=0;i<20;i++){
+        if(strcmp(accname,glob_shm_addr->acc_arr[i]->name)==0){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+int start(String accname){
+    int current;
+    char message [300];
+    memset (message, 0, 300);
+    if(busy==1){
+        write(currentfd, message, sprintf("You are already in a session."));
+        return -1;
+    }
+    if((current=findaccount(accname))==-1){
+        write(currentfd, message, sprintf("Account does not exist."));
+        return -1;
+    }
+    index = current;
+    sem_wait(&glob_shm_addr->acc_arr[i]->lock);
+    glob_shm_addr->acc_arr[index].isf = 1;
+    busy = 1;
+    return 0;
+}
+
+int detrequest(){
     String arg1 = malloc(6);
     String arg2 = malloc(101);
+    float amount;
     int function;
+    char message [300];
+    memset (message, 0, 300);
     if(!command){
-        //error
+        write(currentfd, message, sprintf("Not a valid command."));
         return -1;
     }
     if(strcmp(command,"balance")==0){
         function = 1;
-        //enter balance function
+        balance();
     }
     else if(strcmp(command,"finish")==0){
         function = 2;
-        //finish
+        finish();
 
     }
     if(sscanf(command,"%s %s"arg1,arg2)!=2){
-        //error
+        write(currentfd, message, sprintf("Not a valid command."));
         return -1;
     }
 
     if(strcmp(arg1,"open")==0){
         function = 3;
-        //open new account
+        makeAccount(arg2);
 
     }
     else if(strcmp(arg1,"start")==0){
         function = 4;
-        //start customer session
+        start();
 
     }
     else if(strcmp(arg1,"credit")==0){
         function = 5;
-        //enter credit function
+        if((amount=atof(arg2))==0.0){
+            write(currentfd, message, sprintf("Not a valid amount."));
+        }
+        credit(amount);
 
     }
     else if(strcmp(arg1,"debit")==0){
         function = 6;
-        //enter debit function
+        if((amount=atof(arg2))==0.0){
+            write(currentfd, message, sprintf("Not a valid amount."));
+        }
+        debit(amount)
 
     }
     free(arg1);
     free(arg2);
     return function;
+}
+
+int balance(req){
+    if(busy == 0)
+        return -1;
+    
+    char output [256];
+    memset (output, 0, 256);
+    
+    sprintf(output, "Current balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
+    write(currentfd, output, strlen(output) + 1);
+    return 1; /*balance function code is 1*/
+}
+
+int credit(float amount){
+    if(busy == 0)
+        return -1;
+    
+    acc_curr_val = glob_shm_addr->acc_arr[index]->balance;
+    if(amount<=0){
+    	return -1;
+    }
+        glob_shm_addr->acc_arr[index]->balance = acc_curr_val + amount;
+        
+    char output [256];
+    memset (output, 0, 256);
+    
+    sprintf(output, "CREDIT: New balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
+    write(currentfd, output, strlen(output)+ 1);
+    return 5;
+}
+
+int debit(float amount){
+    if(busy == 0)
+        return -1;
+    acc_curr_val = glob_shm_addr->acc_arr[index]->balance;
+    if(amount <= 0)
+        return -1;
+    if(amount > acc_curr_val)
+        return -1;
+    glob_shm_addr->acc_arr[index]->balance = acc_curr_val - amount;
+    
+    char output [256];
+    memset (output, 0, 256);
+    
+    sprintf(output, "DEBIT: New balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
+    write(currentfd, output, strlen(output)+ 1);
+    
+    return 6;
 }
 
 void alarmhandler(int sig){
@@ -111,7 +259,7 @@ void shm_setup()
     if ((shm_id = shmget(key, sizeof(Bank), IPC_CREAT | 0666)) < 0)
     {
         message = "Error: shmget() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
     
@@ -120,7 +268,7 @@ void shm_setup()
     if (*(int*)(glob_shm_addr = shmat(shm_id, NULL, 0)) == -1)
     {
         message = "ERROR: shmat() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
 
@@ -136,14 +284,14 @@ void shm_setup()
     if ((shm_id = shmget(key, sizeof(Bank), 0666)) < 0)
     {
         message = "Error: shmget() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
 
     if (*(int*)(glob_shm_addr = shmat(shm_id, NULL, 0)) == -1)
     {
         message = "ERROR: shmat() failed.";
-        write(glob_sd, message, strlen(message)+1);
+        write(1, message, strlen(message)+1);
         exit(1);
     }
 }
@@ -199,24 +347,28 @@ int claim_port( const char * port )
     }
 }
 
-int makeAccount(String name, int fd){
-
+int makeAccount(String name){
     int i;
     int num = glob_shm_addr->currAccounts;
 
     char message [2048];
     memset (message, 0, 2048);
     
+    if(busy==1){
+    	write(currentfd, message, sprintf("You cannot create another account while already in a session."));
+        return -1;
+    }
+    
     if(num == 20)
     {
-        write(fd, message, sprintf("Sorry, the bank is full and cannot hold a new account."));
+        write(currentfd, message, sprintf("Sorry, the bank is full and cannot hold a new account."));
         return -1;
     }
 
     for(i = 0; i < num; i++){
         if(strcmp(name, glob_shm_addr->acc_arr[i].name) == 0)
         {
-            write(fd, message, sprintf("Sorry, an account with that name already exists."));
+            write(currentfd, message, sprintf("Sorry, an account with that name already exists."));
             return -1;
         }
     }
@@ -239,15 +391,13 @@ int makeAccount(String name, int fd){
 
     /*success*/
     return 0;
-
 }
 
 
 int main (int argc, char** argv){
 	/*whaaaaaaat in the world*/
 	/*ok let's focus*/
-
-	int sd;
+    int sd;
     char message[256];
     pthread_attr_t kernel_attr;
     socklen_t address_len;
@@ -259,25 +409,21 @@ int main (int argc, char** argv){
     struct sigaction sigalrm;
 
     alarmSetup(sigalrm);
-    //alarm(3); not sure why this is necessary
+    alarm(3);
 
-
-    
     chldSetup(sigchld);
     if (sigaction(SIGCHLD, &sigchld, NULL) == -1) {
         perror("sigchld error");
         exit(1);
     }
+    
     intSetup(sigint);
     if (sigaction(SIGINT, &sigint, NULL) == -1) {
         perror("sigint error");
         exit(1);
     }
 
-
-
-
-        if ( pthread_attr_init( &kernel_attr ) != 0 )
+    if ( pthread_attr_init( &kernel_attr ) != 0 )
     {
         printf( "pthread_attr_init() failed in file %s line %d\n", __FILE__, __LINE__ );
         return 0;
@@ -289,7 +435,7 @@ int main (int argc, char** argv){
     }
     else if ( (sd = claim_port( "36963" )) == -1 )
     {
-        write( 1, message, sprintf( message,  "\x1b[1;31mCould not bind to port %s errno %s\x1b[0m\n", "51268", strerror( errno ) ) );
+        write( 1, message, sprintf( message,  "\x1b[1;31mCould not bind to port %s errno %s\x1b[0m\n", "36963", strerror( errno ) ) );
         return 1;
     }
     else if ( listen( sd, 100 ) == -1 )
@@ -306,6 +452,7 @@ int main (int argc, char** argv){
             }
            if(child==0){
             close(sd);
+            currentfd = fd;
             //send child off to do whatever the client wants
             close(fd);
            }
