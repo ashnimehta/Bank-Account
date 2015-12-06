@@ -4,6 +4,35 @@ static int index;
 static char glob_sd;
 static Bank* glob_shm_addr;
 static int glob_shm_id;
+static int busy=0;
+
+int findaccount(String accname){
+    int i=0;
+    for(i=0;i<20;i++){
+        if(strcmp(accname,glob_shm_addr->acc_arr[i]->name)==0){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+int start(int fd,String accname){
+    int current;
+    if(busy==1){
+        //whatchu tryna do, two customers at once, you godless whore
+        return -1;
+    }
+    if((current=findaccount(accname))==-1){
+        //error, accname does not exist
+        return -1;
+    }
+    index = current;
+    sem_wait(&glob_shm_addr->acc_arr[i]->lock);
+    glob_shm_addr->acc_arr[index].isf = 1;
+    busy = 1;
+    return 0;
+}
 
 int detrequest(int fd, String command){
     String arg1 = malloc(6);
