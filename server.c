@@ -55,7 +55,7 @@ int finish(){
     char message [300];
     memset (message, 0, 300);
     if(busy==0){
-        write(fd, message, sprintf("You are not currently in a session."));        
+        write(currentfd, message, sprintf("You are not currently in a session."));        
         return -1;
     }
     busy = 0;
