@@ -31,11 +31,11 @@ int findaccount(String accname){
 int start(int fd,String accname){
     int current;
     if(busy==1){
-        //whatchu tryna do, two customers at once, you godless whore
+        write(fd, message, sprintf("You are already in a session."));
         return -1;
     }
     if((current=findaccount(accname))==-1){
-        //error, accname does not exist
+        write(fd, message, sprintf("Account does not exist."));
         return -1;
     }
     index = current;
@@ -50,7 +50,7 @@ int detrequest(int fd, String command){
     String arg2 = malloc(101);
     int function;
     if(!command){
-        //error
+        write(fd, message, sprintf("Not a valid command."));
         return -1;
     }
     if(strcmp(command,"balance")==0){
@@ -63,7 +63,7 @@ int detrequest(int fd, String command){
 
     }
     if(sscanf(command,"%s %s"arg1,arg2)!=2){
-        //error
+        write(fd, message, sprintf("Not a valid command."));
         return -1;
     }
 
