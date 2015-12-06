@@ -94,7 +94,7 @@ int start(String accname){
     return 0;
 }
 
-int detrequest(int fd){
+int detrequest(){
     String arg1 = malloc(6);
     String arg2 = malloc(101);
     float amount;
@@ -390,7 +390,6 @@ int makeAccount(String name){
 
     /*success*/
     return 0;
-
 }
 
 
