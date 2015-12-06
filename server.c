@@ -101,12 +101,24 @@ int detrequest(){
     float amount;
     int function;
     char message [300];
+    char command [300];
     memset (message, 0, 300);
+    memset (command, 0, 300);
+    
+    while ( read(currentfd, command, sizeof(command) ) > 0 ){
+    
     if(!command){
         write(currentfd, message, sprintf("Not a valid command."));
         return -1;
     }
-    if(strcmp(command,"balance")==0){
+    if(strcmp(command, "exit") == 0){
+    	if(busy){
+		sem_post(&glob_shmaddr->acc_arr[index].lock);
+		glob_shmaddr->acc_arr[index].isf = 0;
+	}
+	exit(0);
+    }
+    else if(strcmp(command,"balance")==0){
         function = 1;
         balance();
     }
@@ -143,9 +155,11 @@ int detrequest(){
         if((amount=atof(arg2))==0.0){
             write(currentfd, message, sprintf("Not a valid amount."));
         }
-        debit(amount)
-
+        debit(amount);
     }
+    
+    }
+    
     free(arg1);
     free(arg2);
     return function;
