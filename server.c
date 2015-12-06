@@ -93,6 +93,7 @@ int start(int fd,String accname){
 int detrequest(int fd, String command){
     String arg1 = malloc(6);
     String arg2 = malloc(101);
+    float amount;
     int function;
     if(!command){
         write(fd, message, sprintf("Not a valid command."));
@@ -100,11 +101,11 @@ int detrequest(int fd, String command){
     }
     if(strcmp(command,"balance")==0){
         function = 1;
-        //enter balance function
+        balance(fd);
     }
     else if(strcmp(command,"finish")==0){
         function = 2;
-        //finish
+        finish(fd);
 
     }
     if(sscanf(command,"%s %s"arg1,arg2)!=2){
@@ -114,22 +115,28 @@ int detrequest(int fd, String command){
 
     if(strcmp(arg1,"open")==0){
         function = 3;
-        //open new account
+        makeAccount(arg2,fd);
 
     }
     else if(strcmp(arg1,"start")==0){
         function = 4;
-        //start customer session
+        start(fd);
 
     }
     else if(strcmp(arg1,"credit")==0){
         function = 5;
-        //enter credit function
+        if((amount=atof(arg2))==0.0){
+            write(fd, message, sprintf("Not a valid amount."));
+        }
+        credit(amount,fd);
 
     }
     else if(strcmp(arg1,"debit")==0){
         function = 6;
-        //enter debit function
+        if((amount=atof(arg2))==0.0){
+            write(fd, message, sprintf("Not a valid amount."));
+        }
+        debit(amount,fd)
 
     }
     free(arg1);
@@ -151,31 +158,28 @@ int balance(req){
     return 1; /*balance function code is 1*/
 }
 
-int credit(char* amount){
+int credit(float amount){
     if(busy == 0)
         return -1;
     
-    tbd = atof(amount);
     acc_curr_val = glob_shm_addr->acc_arr[index]->balance;
-    
-    if(tbc > 0)
-    {
-        glob_shm_addr->acc_arr[index]->balance = acc_curr_val + tbd;
+    if(amount<=0){
+    	return -1;
     }
+        glob_shm_addr->acc_arr[index]->balance = acc_curr_val + amount;
 
     return 5;
 }
 
-int debit(char* amount){
+int debit(float amount){
     if(busy == 0)
         return -1;
     acc_curr_val = glob_shm_addr->acc_arr[index]->balance;
-    tbd = atof(amount);
-    if(tbd <= 0)
+    if(amount <= 0)
         return -1;
-    if(tbd > acc_curr_val)
+    if(amount > acc_curr_val)
         return -1;
-    glob_shm_addr->acc_arr[index]->balance = acc_curr_val - tbd;
+    glob_shm_addr->acc_arr[index]->balance = acc_curr_val - amount;
     return 6;
 }
 
