@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+#include <fcntl.h>
 
 typedef char* String;
 typedef struct sockaddr* sockptr;
