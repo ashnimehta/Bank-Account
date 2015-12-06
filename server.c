@@ -173,7 +173,14 @@ int credit(float amount){
     	return -1;
     }
         glob_shm_addr->acc_arr[index]->balance = acc_curr_val + amount;
-
+        
+    char output [256];
+    memset (output, 0, 256);
+    
+    sprintf(output, "CREDIT: New balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
+    strcpy(req, output);
+    output[strlen(output)] = '\0';
+    
     return 5;
 }
 
@@ -186,6 +193,14 @@ int debit(float amount){
     if(amount > acc_curr_val)
         return -1;
     glob_shm_addr->acc_arr[index]->balance = acc_curr_val - amount;
+    
+    char output [256];
+    memset (output, 0, 256);
+    
+    sprintf(output, "CREDIT: New balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
+    strcpy(req, output);
+    output[strlen(output)] = '\0';
+    
     return 6;
 }
 
