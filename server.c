@@ -119,11 +119,9 @@ int detrequest(){
 	exit(0);
     }
     else if(strcmp(command,"balance")==0){
-        function = 1;
         balance();
     }
     else if(strcmp(command,"finish")==0){
-        function = 2;
         finish();
 
     }
@@ -133,17 +131,14 @@ int detrequest(){
     }
 
     if(strcmp(arg1,"open")==0){
-        function = 3;
         makeAccount(arg2);
 
     }
     else if(strcmp(arg1,"start")==0){
-        function = 4;
         start();
 
     }
     else if(strcmp(arg1,"credit")==0){
-        function = 5;
         if((amount=atof(arg2))==0.0){
             write(currentfd, message, sprintf("Not a valid amount."));
         }
@@ -151,18 +146,15 @@ int detrequest(){
 
     }
     else if(strcmp(arg1,"debit")==0){
-        function = 6;
         if((amount=atof(arg2))==0.0){
             write(currentfd, message, sprintf("Not a valid amount."));
         }
         debit(amount);
     }
-    
     }
-    
     free(arg1);
     free(arg2);
-    return function;
+    return 0;
 }
 
 int balance(req){
