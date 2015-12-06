@@ -52,6 +52,8 @@ void printlist()
 }
 
 int finish(int fd){
+    char message [300];
+    memset (message, 0, 300);
     if(busy==0){
         write(fd, message, sprintf("You are not currently in a session."));        
         return -1;
@@ -75,6 +77,8 @@ int findaccount(String accname){
 
 int start(int fd,String accname){
     int current;
+    char message [300];
+    memset (message, 0, 300);
     if(busy==1){
         write(fd, message, sprintf("You are already in a session."));
         return -1;
@@ -95,6 +99,8 @@ int detrequest(int fd, String command){
     String arg2 = malloc(101);
     float amount;
     int function;
+    char message [300];
+    memset (message, 0, 300);
     if(!command){
         write(fd, message, sprintf("Not a valid command."));
         return -1;
