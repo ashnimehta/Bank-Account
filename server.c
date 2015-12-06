@@ -158,9 +158,7 @@ int balance(req){
     memset (output, 0, 256);
     
     sprintf(output, "Current balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
-    strcpy(req, output);
-    output[strlen(output)] = '\0';
-    
+    write(fd, output, strlen(output) + 1);
     return 1; /*balance function code is 1*/
 }
 
@@ -178,9 +176,7 @@ int credit(float amount){
     memset (output, 0, 256);
     
     sprintf(output, "CREDIT: New balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
-    strcpy(req, output);
-    output[strlen(output)] = '\0';
-    
+    write(currentfd, output, strlen(output)+ 1);
     return 5;
 }
 
@@ -197,9 +193,8 @@ int debit(float amount){
     char output [256];
     memset (output, 0, 256);
     
-    sprintf(output, "CREDIT: New balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
-    strcpy(req, output);
-    output[strlen(output)] = '\0';
+    sprintf(output, "DEBIT: New balance is %.2f", glob_shm_addr->acc_arr[index]->balance);
+    write(currentfd, output, strlen(output)+ 1);
     
     return 6;
 }
