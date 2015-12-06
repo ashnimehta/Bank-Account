@@ -18,7 +18,7 @@ void printlist()
     memset(ourout, 0, 1500);
 
     if(glob_shm_addr->currAccounts <= 0){
-        write(1, noAcc, strlen(NoAcc) + 1);
+        write(currentfd, noAcc, strlen(NoAcc) + 1);
         return;
     }    
     
@@ -45,7 +45,7 @@ void printlist()
     outlen = strlen(outlen);
 
     /*write to stdout*/
-    write(1, ourout, outlen + 1);
+    write(currentfd, ourout, outlen + 1);
 
     /*unlock the mutex*/
     sem_post(&glob_shm_addr->lock);
