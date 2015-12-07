@@ -7,7 +7,7 @@ static int currentfd;
 static int glob_shmid;
 void printlist()
 {
-   String noAcc = "No accounts are currently in the bank.";
+   String noAcc = "No accounts are currently in the bank.\n";
     
     char printedoutput[20][150];
     String flagval;
@@ -30,10 +30,11 @@ void printlist()
     for(i = 0; i < glob_shm_addr->currAccounts; i++){
         if(glob_shm_addr->acc_arr[i].isf == 0)
         {
-            flagval = "false";
+            flagval = "";
         }
-        else flagval = "true";
-        sprintf(printedoutput[i], "Account at INDEX %d: Name = %s, Balance = %.2f, In Session = %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i].balance, flagval);
+        else flagval = "IN SERVICE";
+        sprintf(printedoutput[i], "Account at Index %d: Name = %s, Balance = %.2f, %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i].balance, flagval);
+        sleep(2);
     }
 
     for (j = 0; j<glob_shm_addr->currAccounts; j++){
@@ -77,8 +78,10 @@ int findaccount(String accname){
 
 int start(String accname){
     int current;
-    char message [300];
-    memset (message, 0, 300);
+    char message [100];
+    char continuation [100];
+    memset (continuation, 0, 100);
+    memset (message, 0, 100);
     if(busy==1){
         strcpy(message, "You are already in a session.");
         write(currentfd, message, strlen(message));
@@ -90,7 +93,14 @@ int start(String accname){
         return -1;
     }
     INDEX = current;
-    sem_wait(&glob_shm_addr->acc_arr[INDEX].lock);
+        strcpy(message, "Account currently in use, please wait.");
+        strcpy(continuation, "Account acquired. Please enter a command.");
+    while(sem_trywait(&glob_shm_addr->acc_arr[INDEX].lock)!=0){   
+        write(currentfd, message, strlen(message));
+        sleep(5);
+    }
+    write(currentfd, continuation, strlen(continuation));
+    printf("GOTEEEEM\n");
     glob_shm_addr->acc_arr[INDEX].isf = 1;
     busy = 1;
     return 0;
@@ -107,16 +117,19 @@ int detrequest(){
     memset (command, 0, 300);
     
     while ( read(currentfd, command, sizeof(command) ) > 0 ){
-    	if(strlen(command)<4){
-                strcpy(message, "Not a valid command.\n");
+
+            if(strlen(command)<4){
+                strcpy(message, "Not a valid command.");
                 write(currentfd, message, strlen(message)+1);
                 memset (message, 0, 300);
                 memset (command, 0, 300);
                 continue;
 
             }
+
     sscanf(command,"%s %s",arg1,arg2);
     if(strcmp(arg1, "exit") == 0){
+        printf("busy is %d\n",busy );
     	if(busy==1){
 		sem_post(&glob_shm_addr->acc_arr[INDEX].lock);
 		glob_shm_addr->acc_arr[INDEX].isf = 0;
@@ -140,7 +153,7 @@ int detrequest(){
 
     }
     if(sscanf(command,"%s %s",arg1,arg2)!=2){
-        strcpy(message, "Not a valid command.\n");
+        strcpy(message, "Not a valid command.");
         write(currentfd, message, strlen(message)+1);
         memset (message, 0, 300);
         memset (command, 0, 300);
@@ -161,7 +174,7 @@ int detrequest(){
     }
     else if(strcmp(arg1,"credit")==0){
         if((amount=atof(arg2))<=0.0){
-            strcpy(message, "Not a valid amount. \n");
+            strcpy(message, "Not a valid amount. ");
             write(currentfd, message, strlen(message)+1);
             memset (message, 0, 300);
              memset (command, 0, 300);
@@ -174,18 +187,18 @@ int detrequest(){
     }
     else if(strcmp(arg1,"debit")==0){
         if((amount=atof(arg2))<=0.0){
-            strcpy(message, "Not a valid amount.\n");
+            strcpy(message, "Not a valid amount.");
             write(currentfd, message, strlen(message)+1);
             memset (message, 0, 300);
-    memset (command, 0, 300);
-    continue;
+            memset (command, 0, 300);
+            continue;
         }
         debit(amount);
         memset (message, 0, 300);
     memset (command, 0, 300);
     }
     else{
-        strcpy(message, "Not a valid command.\n");
+        strcpy(message, "Not a valid command.");
         write(currentfd, message, strlen(message)+1);
         memset (message, 0, 300);
         memset (command, 0, 300);
@@ -194,7 +207,6 @@ int detrequest(){
     memset (message, 0, 300);
     memset (command, 0, 300);
     }
-    
     free(arg1);
     free(arg2);
     return 0;
@@ -203,7 +215,7 @@ int detrequest(){
 int balance(){
     char message [2048];
     if(busy == 0){
-        strcpy(message, "You are not currently in a session.\n");
+        strcpy(message, "You are not currently in a session.");
         write(currentfd, message, strlen(message)+1);
         return -1;
     }
@@ -225,7 +237,7 @@ int credit(float amount){
     }
     acc_curr_val = glob_shm_addr->acc_arr[INDEX].balance;
     if(amount<=0.0){
-        strcpy(message, "Not a valid amount. \n");
+        strcpy(message, "Not a valid amount. ");
             write(currentfd, message, strlen(message)+1);
     	return -1;
     }
@@ -248,14 +260,16 @@ int debit(float amount){
     }
     float acc_curr_val;
     acc_curr_val = glob_shm_addr->acc_arr[INDEX].balance;
-    if(amount <= 0)
+    if(amount <= 0){
         strcpy(message, "Not a valid amount. \n");
             write(currentfd, message, strlen(message)+1);
         return -1;
-    if(amount > acc_curr_val)
-        strcpy(message, "Cannot debit more than current account balance.\n");
+    }
+    if(amount > acc_curr_val){
+        strcpy(message, "Cannot debit more than current account balance.");
             write(currentfd, message, strlen(message)+1);
         return -1;
+    }
     glob_shm_addr->acc_arr[INDEX].balance = acc_curr_val - amount;
     
     char output [256];
