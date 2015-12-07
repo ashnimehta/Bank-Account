@@ -14,7 +14,6 @@ void printlist()
     int outlen;
     char ourout[1500];
     memset(ourout, 0, 1500);
-
     if(glob_shm_addr->currAccounts <= 0){
         write(currentfd, noAcc, strlen(noAcc) + 1);
         return;
@@ -27,24 +26,34 @@ void printlist()
     int j;
     
     /*Read in the bank values*/
-    for(i = 0; i < glob_shm_addr->currAccounts; i++){
-        if(glob_shm_addr->acc_arr[i].isf == 0)
-        {
-            flagval = "";
+     for(i = 0; i < glob_shm_addr->currAccounts; i++){
+         if(glob_shm_addr->acc_arr[i].isf == 0)
+         {
+             flagval = "";
         }
-        else flagval = "IN SERVICE";
-        sprintf(printedoutput[i], "Account at Index %d: Name = %s, Balance = %.2f, %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i].balance, flagval);
-        sleep(2);
-    }
+       else flagval = "IN SERVICE";
+         sprintf(printedoutput[i], "Account at Index %d: Name = %s, Balance = %.2f, %s \n", i, glob_shm_addr->acc_arr[i].name, glob_shm_addr->acc_arr[i].balance, flagval);
+     }
+     for (j = 0; j<glob_shm_addr->currAccounts; j++){
+         strcat(ourout, printedoutput[j]);
+     }
 
-    for (j = 0; j<glob_shm_addr->currAccounts; j++){
-        strcat(ourout, printedoutput[j]);
-    }
+     outlen = strlen(ourout);
 
-    outlen = strlen(ourout);
+     /*write to stdout*/
+     write(1, ourout, outlen + 1);
 
-    /*write to stdout*/
-    write(1, ourout, outlen + 1);
+    // for(i = 0; i < glob_shm_addr->currAccounts; i++){
+    //     if(glob_shm_addr->acc_arr[i].isf == 0)
+    //      {
+    //          flagval = "";
+    //      }
+    //      else flagval = "IN SERVICE";
+    //      printf("Account at Index %d, ",i);
+    //      puts(glob_shm_addr->acc_arr[i].name);
+    //      printf("Balance = %.2f, %s \n",glob_shm_addr->acc_arr[i].balance, flagval);
+    // }
+
     printf("\n");
     /*unlock the mutex*/
     sem_post(&glob_shm_addr->lock);
@@ -53,7 +62,9 @@ void printlist()
 
 int finish(){
     char message [300];
+    char completion[300];
     memset (message, 0, 300);
+    memset (completion, 0, 300);
     if(busy==0){
         strcpy(message, "You are not currently in a session.");
         write(currentfd, message, strlen(message)+1);        
@@ -62,6 +73,8 @@ int finish(){
     busy = 0;
     glob_shm_addr->acc_arr[INDEX].isf=0;
     sem_post(&glob_shm_addr->acc_arr[INDEX].lock);
+    strcpy(completion, "Succesfully finished the customer session.");
+    write(currentfd, completion, strlen(completion)+1);
     return 0;
 }
 
@@ -100,7 +113,6 @@ int start(String accname){
         sleep(5);
     }
     write(currentfd, continuation, strlen(continuation));
-    printf("GOTEEEEM\n");
     glob_shm_addr->acc_arr[INDEX].isf = 1;
     busy = 1;
     return 0;
@@ -127,9 +139,8 @@ int detrequest(){
 
             }
 
-    sscanf(command,"%s %s",arg1,arg2);
+    sscanf(command," %s %[^\n]\n",arg1,arg2);
     if(strcmp(arg1, "exit") == 0){
-        printf("busy is %d\n",busy );
     	if(busy==1){
 		sem_post(&glob_shm_addr->acc_arr[INDEX].lock);
 		glob_shm_addr->acc_arr[INDEX].isf = 0;
@@ -152,7 +163,8 @@ int detrequest(){
         continue;
 
     }
-    if(sscanf(command,"%s %s",arg1,arg2)!=2){
+
+    if(sscanf(command," %s %[^\n]\n",arg1,arg2)!=2){
         strcpy(message, "Not a valid command.");
         write(currentfd, message, strlen(message)+1);
         memset (message, 0, 300);
@@ -169,8 +181,8 @@ int detrequest(){
     else if(strcmp(arg1,"start")==0){
         start(arg2);
         memset (message, 0, 300);
-    memset (command, 0, 300);
-
+        memset (command, 0, 300);
+        continue;
     }
     else if(strcmp(arg1,"credit")==0){
         if((amount=atof(arg2))<=0.0){
@@ -182,8 +194,8 @@ int detrequest(){
         }
         credit(amount);
         memset (message, 0, 300);
-    memset (command, 0, 300);
-
+        memset (command, 0, 300);
+        continue;
     }
     else if(strcmp(arg1,"debit")==0){
         if((amount=atof(arg2))<=0.0){
@@ -195,7 +207,8 @@ int detrequest(){
         }
         debit(amount);
         memset (message, 0, 300);
-    memset (command, 0, 300);
+        memset (command, 0, 300);
+        continue;
     }
     else{
         strcpy(message, "Not a valid command.");
@@ -428,7 +441,6 @@ int claim_port( const char * port )
 int makeAccount(String name){
     int i;
     int num = glob_shm_addr->currAccounts;
-
     char message [2048];
     memset (message, 0, 2048);
     
@@ -453,8 +465,13 @@ int makeAccount(String name){
             return -1;
         }
     }
-
-    sem_wait(&glob_shm_addr->lock);
+    memset (message, 0, 2048);
+    strcpy(message, "Bank currently in use.");
+    while(sem_trywait(&glob_shm_addr->lock)!=0){   
+        write(currentfd, message, strlen(message));
+        sleep(3);
+    }
+    
 
     /*set the semaphore to 1*/
     sem_init (&glob_shm_addr->acc_arr[num].lock, 1, 1);
@@ -469,7 +486,9 @@ int makeAccount(String name){
 
     /*unlock the semaphore for next use*/
     sem_post(&glob_shm_addr->lock);
-
+    memset (message, 0, 2048);
+    strcpy(message, "Succesfully created account.");
+    write(currentfd, message, strlen(message)+1);
     /*success*/
     return 0;
 }
@@ -508,22 +527,22 @@ int main (int argc, char** argv){
 
     if ( pthread_attr_init( &kernel_attr ) != 0 )
     {
-        printf( "pthread_attr_init() failed\n");
+        printf( "pthread_attr_init() failed in file %s line %d\n", __FILE__, __LINE__ );
         return 0;
     }
     else if ( pthread_attr_setscope( &kernel_attr, PTHREAD_SCOPE_SYSTEM ) != 0 )
     {
-        printf( "pthread_attr_setscope() failed");
+        printf( "pthread_attr_setscope() failed in file %s line %d\n", __FILE__, __LINE__ );
         return 0;
     }
     else if ( (sd = claim_port( "36963" )) == -1 )
     {
-        write( 1, message, sprintf( message,  "Could not bind to port %s errno %s\n", "36963", strerror( errno ) ) );
+        write( 1, message, sprintf( message,  "\x1b[1;31mCould not bind to port %s errno %s\x1b[0m\n", "36963", strerror( errno ) ) );
         return 1;
     }
     else if ( listen( sd, 100 ) == -1 )
     {
-        printf("listen() failed.");
+        printf( "listen() failed in file %s line %d\n", __FILE__, __LINE__ );
         close( sd );
         return 0;
     }
