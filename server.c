@@ -508,22 +508,22 @@ int main (int argc, char** argv){
 
     if ( pthread_attr_init( &kernel_attr ) != 0 )
     {
-        printf( "pthread_attr_init() failed in file %s line %d\n", __FILE__, __LINE__ );
+        printf( "pthread_attr_init() failed\n");
         return 0;
     }
     else if ( pthread_attr_setscope( &kernel_attr, PTHREAD_SCOPE_SYSTEM ) != 0 )
     {
-        printf( "pthread_attr_setscope() failed in file %s line %d\n", __FILE__, __LINE__ );
+        printf( "pthread_attr_setscope() failed");
         return 0;
     }
     else if ( (sd = claim_port( "36963" )) == -1 )
     {
-        write( 1, message, sprintf( message,  "\x1b[1;31mCould not bind to port %s errno %s\x1b[0m\n", "36963", strerror( errno ) ) );
+        write( 1, message, sprintf( message,  "Could not bind to port %s errno %s\n", "36963", strerror( errno ) ) );
         return 1;
     }
     else if ( listen( sd, 100 ) == -1 )
     {
-        printf( "listen() failed in file %s line %d\n", __FILE__, __LINE__ );
+        printf("listen() failed.");
         close( sd );
         return 0;
     }
@@ -535,6 +535,7 @@ int main (int argc, char** argv){
            if(child==0){
             close(sd);
             currentfd = fd;
+            printf("Server accepting a client connection.");
             detrequest();
             close(fd);
            }
