@@ -5,9 +5,9 @@ Ariel Ahdoot (aa1046)
 Ashni Mehta (am1531)
 PA5: MULTITHREADED & MULTIPROCESSED BANK SYSTEM
 (with shared memory!!)
-Server
+#Server
 
-server.h
+#server.h
 
 Within our header file for our server, we have two separate struct definitions: Bank and
 Account. Each Account is comprised of a char array of capacity 100 (as the maximum
