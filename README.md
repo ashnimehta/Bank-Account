@@ -6,16 +6,20 @@ Ashni Mehta (am1531)
 PA5: MULTITHREADED & MULTIPROCESSED BANK SYSTEM
 (with shared memory!!)
 Server
+
 server.h
+
 Within our header file for our server, we have two separate struct definitions: Bank and
 Account. Each Account is comprised of a char array of capacity 100 (as the maximum
 length of an account name is 100 characters), a float balance, an in-session flag (that we
 call isf), and a semaphore.
+
 Within the bank struct, there is another semaphore (that is used when printing out bank
 information and creating new accounts), an Account array of capacity 20 (because the
 maximum number of accounts is 20), and an int to hold the number of accounts that the
 bank currently holds. We have a variety of function definitions within our header file as
 well, but will go into an in-depth explanation below.
+
 server.c
 • main sets up an alarm of 20 seconds, that we use to print bank info if there
 exists at least one account within the bank. We use the function claim_port to
