@@ -5,6 +5,7 @@ Ariel Ahdoot (aa1046)
 Ashni Mehta (am1531)
 PA5: MULTITHREADED & MULTIPROCESSED BANK SYSTEM
 (with shared memory!!)
+---
 Server
 
 server.h
@@ -119,4 +120,4 @@ thread that’s running.
 server session will receive a message saying that the server has disconnected
 and they are thus automatically disconnected as well. We use SIGKILL to
 kill the main process, after all the child processes are killed.
-
+---
